@@ -1,1 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>EV Charge Cost Calculator</title>
 
+  <style>
+    :root {
+      --bg:#f4f6fb;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --muted:#475569;
+      --line:#e5e7eb;
+      --brand:#2563eb;
+      --radius:18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: linear-gradient(180deg,#eef2ff 0%, var(--bg) 100%);
+      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color: var(--ink);
+    }
+
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 28px 16px 40px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: 0 20px 40px rgba(2,6,23,.08);
+      padding: 22px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 22px;
+      letter-spacing: -.01em;
+    }
+
+    .tag {
+      background: #eef2ff;
+      color: #1e3a8a;
+      border: 1px solid #dbeafe;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    p.lead {
+      margin: 8px 0 18px;
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: #334155;
+    }
+
+    input {
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      font-size: 15px;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--brand);
+      box-shadow: 0 0 0 4px rgba(37,99,235,.15);
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: linear-gradient(180deg,var(--brand),#1d4ed8);
+      color: #fff;
+    }
+
+    .secondary {
+      background: #f1f5f9;
+      border: 1px solid var(--line);
+    }
+
+    .results {
+      margin-top: 18px;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px dashed #c7d2fe;
+      background: #f8faff;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+
+    .label {
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    .value {
+      font-size: 20px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    @media (max-width: 720px) {
+      .grid { grid-template-columns: 1fr; }
+      .results { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <h1>EV Charge Cost Calculator ⚡</h1>
+        <span class="tag">Offline-friendly</span>
+      </header>
+
+      <p class="lead">Works on your phone. Enter your details and see cost + time instantly.</p>
+
+      <div class="grid">
+        <div class="field">
+          <label>Battery size (kWh)</label>
+          <input id="battery" type="number" value="50">
+        </div>
+
+        <div class="field">
+          <label>Price (£/kWh)</label>
+          <input id="price" type="number" step="0.01" value="0.50">
+        </div>
+
+        <div class="field">
+          <label>Start charge (%)</label>
+          <input id="start" type="number" value="20">
+        </div>
+
+        <div class="field">
+          <label>End charge (%)</label>
+          <input id="end" type="number" value="80">
+        </div>
+
+        <div class="field">
+          <label>Charger power (kW)</label>
+          <input id="power" type="number" value="38">
+        </div>
+
+        <div class="field">
+          <label>Charging losses (%)</label>
+          <input id="loss" type="number" value="10">
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="primary" onclick="calculate()">Calculate</button>
+        <button class="secondary" onclick="resetAll()">Reset</button>
+      </div>
+
+      <div class="results">
+        <div class="stat">
+          <div class="label">Energy added</div>
+          <div class="value" id="energy">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Estimated cost</div>
+          <div class="value" id="cost">—</div>
+        </div>
+        <div class="stat">
+          <div class="label">Estimated time</div>
+          <div class="value" id="time">—</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function gbp(n) {
+    return n.toLocaleString("en-GB", { style: "currency", currency: "GBP" });
+  }
+
+  function calculate() {
+    const battery = Number(document.getElementById("battery").value);
+    const price = Number(document.getElementById("price").value);
+    const start = Number(document.getElementById("start").value);
+    const end = Number(document.getElementById("end").value);
+    const power = Number(document.getElementById("power").value);
+    const loss = Number(document.getElementById("loss").value);
+
+    if (end <= start) return;
+
+    const added = battery * ((end - start) / 100);
+    const wall = added * (1 + loss / 100);
+    const cost = wall * price;
+    const time = added / power;
+
+    document.getElementById("energy").textContent = added.toFixed(2) + " kWh";
+    document.getElementById("cost").textContent = gbp(cost);
+    document.getElementById("time").textContent =
+      time < 1 ? Math.round(time * 60) + " min"
+               : Math.floor(time) + " hr " + Math.round((time % 1) * 60) + " min";
+  }
+
+  function resetAll() {
+    document.getElementById("battery").value = 50;
+    document.getElementById("price").value = 0.50;
+    document.getElementById("start").value = 20;
+    document.getElementById("end").value = 80;
+    document.getElementById("power").value = 38;
+    document.getElementById("loss").value = 10;
+    calculate();
+  }
+
+  calculate();
+</script>
+
+</body>
+</html>
