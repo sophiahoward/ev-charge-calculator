@@ -172,15 +172,15 @@
         <div class="field">
           <label>Vehicle</label>
           <select id="vehicle" onchange="setBattery()">
-            <option value="50">Nathan’s car – 50 kWh</option>
             <option value="55">Dad’s car – 55 kWh</option>
             <option value="72">Pete’s car – 72 kWh</option>
+            <option value="50">Nathan’s car – 50 kWh</option>
           </select>
         </div>
 
         <div class="field">
           <label>Battery size (kWh)</label>
-          <input id="battery" type="number" value="50" readonly>
+          <input id="battery" type="number" value="55" readonly>
         </div>
 
         <div class="field">
@@ -257,10 +257,8 @@
     const cost = fromWall * price;
     const time = added / power;
 
-    document.getElementById("energy").textContent =
-      added.toFixed(2) + " kWh";
-    document.getElementById("cost").textContent =
-      gbp(cost);
+    document.getElementById("energy").textContent = added.toFixed(2) + " kWh";
+    document.getElementById("cost").textContent = gbp(cost);
 
     const hours = Math.floor(time);
     const minutes = Math.round((time - hours) * 60);
@@ -269,8 +267,8 @@
   }
 
   function resetAll() {
-    document.getElementById("vehicle").value = "50";
-    document.getElementById("battery").value = "50";
+    document.getElementById("vehicle").value = "55";
+    document.getElementById("battery").value = "55";
     document.getElementById("price").value = "0.50";
     document.getElementById("power").value = "38";
     document.getElementById("start").value = "20";
